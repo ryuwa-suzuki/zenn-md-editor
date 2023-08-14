@@ -22,20 +22,28 @@ const toolbar: SimpleMDE.Options["toolbar"] = [
   'side-by-side',
   'fullscreen'
 ];
+const delay = 1000;
 
 const MarkdownEditor: React.FC = () => {
+  const value = localStorage.getItem('smde_saved_content') || "";
   const mdeOptions: SimpleMDE.Options = useMemo(() => {
     return {
       width: 'auto',
       spellChecker: false,
-      toolbar
+      toolbar,
+      autosave: {
+        enabled: true,
+        uniqueId: "saved_content",
+        delay
+      },
     };
   }, []);
 
   return (
     <SimpleMdeReact
       id="simple-mde"
-      options={mdeOptions}/>
+      options={mdeOptions}
+      value={value}/>
   );
 };
 
