@@ -23,10 +23,10 @@ const toolbar: SimpleMDE.Options["toolbar"] = [
   'fullscreen'
 ];
 
-const delay = 1000;
+const delay = 1000; // 1秒後に保存されるように設定
 
 const MarkdownEditor: React.FC = () => {
-  const value = localStorage.getItem('smde_saved_content') || "";
+  const value = localStorage.getItem('smde_saved_content') || ""; // リロード時にローカルストレージの値をバリューにセット
   const mdeOptions: SimpleMDE.Options = useMemo(() => {
     return {
       width: 'auto',
