@@ -1,5 +1,9 @@
-export const App = () => {
+import Home from './components/Home';
+
+const App: React.FC = () => {
   return (
-    <div>Hello World!</div>
+    <Home/>
   )
 }
+
+export default App;
