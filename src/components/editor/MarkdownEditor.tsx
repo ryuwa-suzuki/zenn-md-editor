@@ -22,6 +22,7 @@ const toolbar: SimpleMDE.Options["toolbar"] = [
   'side-by-side',
   'fullscreen'
 ];
+
 const delay = 1000;
 
 const MarkdownEditor: React.FC = () => {
