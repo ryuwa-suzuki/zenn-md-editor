@@ -1,8 +1,11 @@
 import Home from './components/Home';
+import { ZennContentProvider } from './contexts/ZennContext';
 
 const App: React.FC = () => {
   return (
-    <Home/>
+    <ZennContentProvider>
+      <Home/>
+    </ZennContentProvider>
   )
 }
 
