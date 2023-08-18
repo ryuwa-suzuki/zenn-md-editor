@@ -12,6 +12,9 @@ export type zennType = {
     label: string;
     file: string;
   };
+  isZennSynced: boolean;
   setSelectedFile: (selected: { label: string, file: string }) => void;
   setZennDirPath: (zennDirPath: string) => void;
+  syncWithZenn: () => Promise<void>;
+  setIsZennSynced: (value: boolean) => void;
 };
