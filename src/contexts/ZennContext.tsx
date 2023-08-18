@@ -11,6 +11,10 @@ export const ZennContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [fileNames, setFileNames] = useState({ articles: [], books: [] });
 
   const [zennDirPath, setZennDirPath] = useState<zennType['zennDirPath']>('/Users/urchin/ryuwa/zenn-content');
+  const [selectedFile, setSelectedFile] = useState<zennType['selectedFile']>({
+    label: localStorage.getItem('selected_label') || '',
+    file: localStorage.getItem('selected_file') || '',
+  });
 
   const syncWithZenn = async () => {
     try {
@@ -29,7 +33,9 @@ export const ZennContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
     <ZennContentContext.Provider value={{
       fileNames,
       zennDirPath,
-      setZennDirPath
+      selectedFile,
+      setZennDirPath,
+      setSelectedFile
       }}>
       {children}
     </ZennContentContext.Provider>
