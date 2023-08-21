@@ -10,6 +10,9 @@ declare global {
   interface Window {
     api: {
       syncWithZenn: (zennDirPath: string) => Promise<zennType['fileNames']>;
+      getZennContent: (zennDirPath: string, label: string, file: string) => Promise<string>;
+      saveZennFile: (zennDirPath: string, label: string, file: string, content: string) => Promise<void>;
+      uploadImage: (zennDirPath: string, imagePath: string) => Promise<string>;
     };
   }
 }
@@ -26,6 +29,7 @@ const createWindow = (): void => {
     width: 1200,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      webSecurity: false
     },
   });
 
