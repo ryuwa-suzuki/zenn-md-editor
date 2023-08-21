@@ -38,3 +38,58 @@ export function syncWithZenn (ipcMain: Electron.IpcMain) {
     }
   })
 }
+
+export function getZennContent (ipcMain: Electron.IpcMain) {
+  ipcMain.handle('get-zenn-content', async (e, {zennDirPath, label, file}) => {
+    let fileDirPath = '';
+    if (label === 'articles') {
+      fileDirPath = path.join(zennDirPath, 'articles');
+    } else {
+      fileDirPath = path.join(zennDirPath, 'books', label);
+    }
+
+    if (fs.existsSync(path.join(fileDirPath, file))) {
+      return fs.readFileSync(path.join(fileDirPath, file), 'utf8').toString()
+    }
+
+    throw new Error('Failed to read file');
+  })
+}
+
+export function saveZennFile(ipcMain: Electron.IpcMain) {
+  ipcMain.handle('save-zenn-file', async (e, {zennDirPath, label, file, content }) => {
+    let fileDirPath = '';
+    if (label === 'articles') {
+      fileDirPath = path.join(zennDirPath, 'articles');
+    } else {
+      fileDirPath = path.join(zennDirPath, 'books', label);
+    }
+
+    try {
+      fs.writeFileSync(path.join(fileDirPath, file), content, 'utf8');
+      return;
+    } catch (error) {
+      throw new Error('Failed to save file');
+    }
+  });
+}
+
+export function uploadImage(ipcMain: Electron.IpcMain) {
+  ipcMain.handle('upload-image', async (e, {zennDirPath, imagePath }) => {
+    const distPath = path.join(zennDirPath, 'images');
+    const imageName = path.basename(imagePath);
+    const uploadImagePath = path.join(distPath, imageName)
+
+    try {
+      if (!fs.existsSync(distPath)) {
+        fs.mkdirSync(distPath);
+      }
+
+      fs.copyFileSync(imagePath, uploadImagePath)
+
+      return imageName;
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
+}

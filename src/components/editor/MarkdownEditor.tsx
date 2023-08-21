@@ -4,33 +4,66 @@ import SimpleMDE from "easymde";
 import { marked } from "marked";
 import hljs from 'highlight.js';
 import "easymde/dist/easymde.min.css";
-import "highlight.js/styles/base16/bright.css"; //👉 https://highlightjs.org/examples
+import "highlight.js/styles/base16/bright.css";
+import { Modal } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { useZennContentContext } from '../../contexts/ZennContext';
+import InitModal from '../modal/InitModal';
 
-const toolbar: SimpleMDE.Options["toolbar"] = [
-  'bold',
-  'italic',
-  'quote',
-  'unordered-list',
-  'ordered-list',
-  'link',
-  'image',
-  'strikethrough',
-  'code',
-  'table',
-  'redo',
-  'heading',
-  'undo',
-  'clean-block',
-  'horizontal-rule',
-  'preview',
-  'side-by-side',
-  'fullscreen'
-];
+const MarkdownEditor = () => {
+  const [opened, { open, close }] = useDisclosure(false);
+  const modalOpen = () => {
+    open();
+  }
+  const toolbar: SimpleMDE.Options["toolbar"] = [
+    'bold',
+    'italic',
+    'quote',
+    'unordered-list',
+    'ordered-list',
+    'link',
+    'image',
+    'strikethrough',
+    'code',
+    'table',
+    'redo',
+    'heading',
+    'undo',
+    'clean-block',
+    'horizontal-rule',
+    'preview',
+    'side-by-side',
+    'fullscreen',
+    '|',
+    {
+      name: "settings",
+      action: modalOpen,
+      className: "fa fa-cog",
+      title: "settings"
+    },
+    {
+      name: "image",
+      action: () => {
+        const input = document.getElementById("imageFileInput");
+        if (input) {
+          input.click();
+          input.onchange = async () => {
+            const imgFile = (input as HTMLInputElement).files?.[0];
+            if (imgFile) {
+              imageUploadFunction(imgFile)
+            }
+          };
+        }
+      },
+      className: "fa fa-upload",
+      title: "Image Upload",
+    },
+  ];
 
-const delay = 1000; // 1秒後に保存されるように設定
+  const { zennData, isZennSynced, setZennData } = useZennContentContext();
+  const value = localStorage.getItem('smde_saved_value') || "";
 
-const MarkdownEditor: React.FC = () => {
-  const value = localStorage.getItem('smde_saved_content') || ""; // リロード時にローカルストレージの値をSimpleMdeReactコンポーネントのvalueとしてセット
+  marked.setOptions({breaks : true});
 
   const previewRender = (value: string): string => {
     const renderer = new marked.Renderer();
@@ -49,28 +82,80 @@ const MarkdownEditor: React.FC = () => {
       return `<pre>${codeBlock}</pre>`
     };
 
+    renderer.image = (href, title, text) => {
+      let newHref = href;
+      if (!newHref.startsWith('http://') && !newHref.startsWith('https://')) {
+        newHref = `file://${zennDirPath}${newHref}`;
+      }
+      return `<img style="margin: 1.5rem auto;display: table;max-width: 100%; height: auto;" src="${newHref}" alt="${text}" title="${title || text}">`;
+    };
+
     return marked(value, { renderer });
   };
 
+  const imageUploadFunction = async (image:File) => {
+    if (!isZennSynced) {
+      alert('アップロードできません');
+      return;
+    }
+
+    const imageName = await window.api.uploadImage(zennDirPath, image.path);
+
+    const newContent = localStorage.getItem('smde_saved_value') + '![](/images/'+ imageName +')';
+
+    setZennData({...zennData, content: newContent});
+    saveFile(newContent)
+  }
+
   const mdeOptions: SimpleMDE.Options = useMemo(() => {
+    const delay = 1000;
+
     return {
+      breaks: true,
       width: 'auto',
       spellChecker: false,
       toolbar,
+      uploadImage: true,
       previewRender,
+      imageUploadFunction,
       autosave: {
         enabled: true,
-        uniqueId: "saved_content",
-        delay
+        uniqueId: "saved_value",
+        delay,
       },
     };
   }, [previewRender]);
 
+  let saveTimeout: NodeJS.Timeout | undefined;
+  const zennDirPath = localStorage.getItem('zenn_dir_path');
+  const saveFile = async (newContent: string) => {
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+    }
+
+    if (newContent !== zennData.content) {
+      saveTimeout = setTimeout(async () => {
+        try {
+          await window.api.saveZennFile(zennDirPath, zennData.label, zennData.file, newContent);
+        } catch (error) {
+          alert('エラーが発生しました');
+        }
+      }, 2000);
+    }
+  }
+
   return (
-    <SimpleMdeReact
-      id="simple-mde"
-      options={mdeOptions}
-      value={value}/>
+    <>
+      <input type="file" id="imageFileInput" style={{ display: "none" }} />
+      <Modal opened={opened} onClose={close}>
+        <InitModal closeModal={close}/>
+      </Modal>
+      <SimpleMdeReact
+        id="simple-mde"
+        onChange={isZennSynced ? saveFile : null}
+        value={isZennSynced ? zennData.content : value}
+        options={mdeOptions} />
+    </>
   );
 };
 
